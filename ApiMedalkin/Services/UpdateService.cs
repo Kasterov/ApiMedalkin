@@ -1,6 +1,7 @@
 ﻿using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
 using ApiMedalkin.Models;
+using ApiMedalkin.Repository;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
@@ -13,13 +14,13 @@ public interface IUpdateService
 public class UpdateService : IUpdateService
 {
     private readonly ITelegramBotClient _botClient;
-    private readonly IDynamoDBContext _DbContext;
+    private readonly IUserRepository _userRepository;
 
     public UpdateService(ITelegramBotClient botClient,
-        IDynamoDBContext dynamoDB)
+        IUserRepository userRepository)
     {
         _botClient = botClient;
-        _DbContext = dynamoDB;
+        _userRepository = userRepository;
     }
 
     public async Task HandleUpdate(Update update, CancellationToken cancellationToken = default)
@@ -58,9 +59,7 @@ public class UpdateService : IUpdateService
                         Date = DateTime.Now.AddHours(2)
                     };
 
-                    var table = _DbContext.GetTargetTable<UserModel>();
-
-                    await table.PutItemAsync(_DbContext.ToDocument(request));
+                    await _userRepository.AddUserMedalAsync(request);
 
                     await _botClient.SendTextMessageAsync(message.Chat.Id, "Готово! Проверить медальки можно по команде:\n\n /check_medalki\n@username");
 
@@ -89,14 +88,9 @@ public class UpdateService : IUpdateService
                         command = message.Text.Split("\n").ToList();
                     }
 
-                    List<ScanCondition> conditions = new List<ScanCondition>();
-                    conditions.Add(new ScanCondition("UserName", ScanOperator.Contains, command[1].Trim('@')));
-                    conditions.Add(new ScanCondition("ChatId", ScanOperator.Equal, $"{message.Chat.Id}"));
+                    var medals = await _userRepository.GetUserMedalsByRewardAsync(command[1], message.Chat.Id.ToString());
 
-                    var result = _DbContext.ScanAsync<UserModel>(conditions);
-                    var medals = await result.GetRemainingAsync();
-
-                    if (medals.Count == 0)
+                    if (medals.ToList().Count == 0)
                     {
                         await _botClient.SendTextMessageAsync(message.Chat.Id, $"К сожалению у {command[1]} нет медалек!");
                         return;
@@ -125,20 +119,13 @@ public class UpdateService : IUpdateService
                         return;
                     }
 
-                    var table = _DbContext.GetTargetTable<UserModel>();
-                    string searchCondition = $"{command[2]},{command[1].Trim('@')},{message.Chat.Id}";
+                    string reward = $"{command[2]},{command[1].Trim('@')},{message.Chat.Id}";
 
-                    var request = await table.GetItemAsync(new Primitive(searchCondition));
-                    var requestToDelete = _DbContext.FromDocument<UserModel>(request);
-
-                    if (requestToDelete == null)
+                    if (!await _userRepository.DeleteUserMedalAsync(reward))
                     {
                         await _botClient.SendTextMessageAsync(message.Chat.Id, $"У {command[1]} нет такой медальки!");
                         return;
                     }
-
-                    var doc = _DbContext.ToDocument<UserModel>(requestToDelete);
-                    await _DbContext.GetTargetTable<UserModel>().DeleteItemAsync(doc);
 
                     await _botClient.SendTextMessageAsync(message.Chat.Id, $"Таааакс, я все сделал!");
                     return;

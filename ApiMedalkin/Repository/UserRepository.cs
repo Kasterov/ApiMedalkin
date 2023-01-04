@@ -8,7 +8,7 @@ public interface IUserRepository
 {
     Task<UserModel> GetUserMedalAsync(string reward);
     Task<IEnumerable<UserModel>> GetUserMedalsByRewardAsync(string userName, string chatId);
-    Task DeleteUserMedalAsync(string reward);
+    Task<bool> DeleteUserMedalAsync(string reward);
     Task AddUserMedalAsync(UserModel userModel);
 }
 public class UserRepository : IUserRepository
@@ -17,8 +17,8 @@ public class UserRepository : IUserRepository
     private readonly IDynamoDBContext _DbContext;
     public UserRepository(IDynamoDBContext dBContext)
     {
-        _MedalkinDbTable = _DbContext.GetTargetTable<UserModel>();
         _DbContext = dBContext;
+        _MedalkinDbTable = _DbContext.GetTargetTable<UserModel>();
     }
 
     public async Task AddUserMedalAsync(UserModel userModel)
@@ -28,11 +28,18 @@ public class UserRepository : IUserRepository
         await _MedalkinDbTable.PutItemAsync(userAsDocument);
     }
 
-    public async Task DeleteUserMedalAsync(string reward)
+    public async Task<bool> DeleteUserMedalAsync(string reward)
     {
         var userModelAsDocument = await _MedalkinDbTable.GetItemAsync(new Primitive(reward));
 
+        if (_DbContext.FromDocument<UserModel>(userModelAsDocument) == null)
+        {
+            return false;
+        }
+
         await _MedalkinDbTable.DeleteItemAsync(userModelAsDocument);
+
+        return true;
     }
 
     public async Task<UserModel> GetUserMedalAsync(string reward)
