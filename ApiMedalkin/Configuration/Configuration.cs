@@ -1,6 +1,7 @@
 ﻿using Amazon;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using ApiMedalkin.Repository;
 using ApiMedalkin.Services;
 
 namespace ApiMedalkin.Configuration;
@@ -12,5 +13,6 @@ public static class Configuration
         services.AddScoped<IUpdateService, UpdateService>();
         services.AddSingleton<IAmazonDynamoDB>(new AmazonDynamoDBClient(RegionEndpoint.EUCentral1));
         services.AddScoped<IDynamoDBContext, DynamoDBContext>();
+        services.AddScoped<IUserRepository, UserRepository>();
     }
 }
