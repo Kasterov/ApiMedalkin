@@ -4,6 +4,6 @@ This bot was created using the C# programming language. When you add it to the c
 
 Technology stack:
 ASP.NET core/
-Lambda serverless RESTFUL apigateway/
+Lambda serverless apigateway/
 DynamoDB/
 API Telegram (insane and helpful thing)
