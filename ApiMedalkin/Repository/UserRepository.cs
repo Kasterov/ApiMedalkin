@@ -10,6 +10,7 @@ public interface IUserRepository
     Task<IEnumerable<UserModel>> GetUserMedalsByRewardAsync(string userName, string chatId);
     Task<bool> DeleteUserMedalAsync(string reward);
     Task AddUserMedalAsync(UserModel userModel);
+    Task<bool> IsChatHasMedal(string medal, string chatId);
 }
 public class UserRepository : IUserRepository
 {
@@ -57,5 +58,22 @@ public class UserRepository : IUserRepository
 
         var result = _DbContext.ScanAsync<UserModel>(conditionsToScan);
         return await result.GetRemainingAsync();
+    }
+
+    public async Task<bool> IsChatHasMedal(string medal, string chatId)
+    {
+        List<ScanCondition> conditionsToScan = new List<ScanCondition>();
+        conditionsToScan.Add(new ScanCondition("Emoji", ScanOperator.Contains, medal));
+        conditionsToScan.Add(new ScanCondition("ChatId", ScanOperator.Equal, $"{chatId}"));
+
+        var result = _DbContext.ScanAsync<UserModel>(conditionsToScan);
+        var model = await result.GetRemainingAsync();
+
+        if (model is null)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

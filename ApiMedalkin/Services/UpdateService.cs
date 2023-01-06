@@ -49,6 +49,12 @@ public class UpdateService : IUpdateService
                         return;
                     }
 
+                    if (await _userRepository.IsChatHasMedal(command[1], message.Chat.Id.ToString()))
+                    {
+                        await _botClient.SendTextMessageAsync(message.Chat.Id, "В данном чате уже имеется юзер с такой медалькой!");
+                        return;
+                    }
+
                     var request = new UserModel()
                     {
                         UserName = command[1].Trim('@'),
