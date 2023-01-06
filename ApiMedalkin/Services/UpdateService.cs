@@ -1,6 +1,4 @@
-﻿using Amazon.DynamoDBv2.DataModel;
-using Amazon.DynamoDBv2.DocumentModel;
-using ApiMedalkin.Models;
+﻿using ApiMedalkin.Models;
 using ApiMedalkin.Repository;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -49,9 +47,9 @@ public class UpdateService : IUpdateService
                         return;
                     }
 
-                    if (await _userRepository.IsChatHasMedal(command[1], message.Chat.Id.ToString()))
+                    if (await _userRepository.IsChatHasMedal(command[2], message.Chat.Id.ToString()))
                     {
-                        await _botClient.SendTextMessageAsync(message.Chat.Id, "В данном чате уже имеется юзер с такой медалькой!");
+                        await _botClient.SendTextMessageAsync(message.Chat.Id, $"В данном чате уже имеется юзер с такой медалькой!");
                         return;
                     }
 

@@ -54,7 +54,7 @@ public class UserRepository : IUserRepository
     {
         List<ScanCondition> conditionsToScan = new List<ScanCondition>();
         conditionsToScan.Add(new ScanCondition("UserName", ScanOperator.Contains, userName.Trim('@')));
-        conditionsToScan.Add(new ScanCondition("ChatId", ScanOperator.Equal, $"{chatId}"));
+        conditionsToScan.Add(new ScanCondition("ChatId", ScanOperator.Equal, chatId));
 
         var result = _DbContext.ScanAsync<UserModel>(conditionsToScan);
         return await result.GetRemainingAsync();
@@ -63,13 +63,13 @@ public class UserRepository : IUserRepository
     public async Task<bool> IsChatHasMedal(string medal, string chatId)
     {
         List<ScanCondition> conditionsToScan = new List<ScanCondition>();
-        conditionsToScan.Add(new ScanCondition("Emoji", ScanOperator.Contains, medal));
-        conditionsToScan.Add(new ScanCondition("ChatId", ScanOperator.Equal, $"{chatId}"));
+        conditionsToScan.Add(new ScanCondition("Emoji", ScanOperator.Equal, medal));
+        conditionsToScan.Add(new ScanCondition("ChatId", ScanOperator.Equal, chatId));
 
         var result = _DbContext.ScanAsync<UserModel>(conditionsToScan);
         var model = await result.GetRemainingAsync();
 
-        if (model is null)
+        if (model.Count() == 0)
         {
             return false;
         }
