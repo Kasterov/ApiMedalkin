@@ -1,5 +1,6 @@
 ﻿using ApiMedalkin.Models;
 using ApiMedalkin.Repository;
+using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
@@ -100,10 +101,16 @@ public class UpdateService : IUpdateService
                         return;
                     }
 
-                    foreach (var medal in medals)
+                    StringBuilder response = new StringBuilder();
+
+                    var orderedList = medals.OrderByDescending(x => x.Date);
+
+                    foreach (var medal in orderedList)
                     {
-                        await _botClient.SendTextMessageAsync(message.Chat.Id, $"{medal.Emoji} - {medal.Description} - {medal.Date}\n\n");
+                        response.Append($"{medal.Emoji} - {medal.Description} - {medal.Date}\n\n");
                     }
+                    await _botClient.SendTextMessageAsync(message.Chat.Id, response.ToString());
+
                 }
                 catch
                 {
